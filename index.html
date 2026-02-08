@@ -188,7 +188,7 @@
         // State
         let state = {
             unit: 'px', // 'px' or 'rem'
-            minWidth: 480,
+            minWidth: 375,
             maxWidth: 1440,
             minFont: 18,
             maxFont: 32,
@@ -307,24 +307,18 @@
             const yIntersection = -minW * slope + y1;
 
             // Create CSS Value strings
-            const slopeVw = (slope * 100).toFixed(4);
-            const yInterRem = (yIntersection / root).toFixed(4);
+            // Use parseFloat to strip trailing zeros after fixing precision
+            const slopeVw = parseFloat((slope * 100).toFixed(4));
+            const yInterRem = parseFloat((yIntersection / root).toFixed(4));
             
             // Bounds for clamp
-            const bound1Rem = (minF / root).toFixed(4);
-            const bound2Rem = (maxF / root).toFixed(4); 
-            
-            // Clamp must be ordered: clamp(MIN, VAL, MAX) where MIN < MAX
-            // However, minFont and maxFont variables are just values. 
-            // If invert is false: minFont is start, maxFont is end.
-            // If invert is true: maxFont is start, minFont is end.
             
             // Determine absolute floor and ceiling for the CSS clamp function
             const absMin = Math.min(minF, maxF) / root;
             const absMax = Math.max(minF, maxF) / root;
 
-            const clampMin = absMin.toFixed(4);
-            const clampMax = absMax.toFixed(4);
+            const clampMin = parseFloat(absMin.toFixed(4));
+            const clampMax = parseFloat(absMax.toFixed(4));
 
             // Calculate value
             let val = `${yInterRem}rem + ${slopeVw}vw`;

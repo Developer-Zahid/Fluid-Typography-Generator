@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fluid Typography Clamp() Generator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        dark: {
+                            900: '#0B1120', // Main background
+                            800: '#1e293b', // Panels/Inputs
+                            700: '#334155', // Borders
+                            600: '#475569', // Text muted
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['Fira Code', 'monospace'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code&display=swap');
+        
+        body {
+            background-color: #0f172a; /* Slate 900 */
+        }
+
+        /* Remove spin buttons from inputs */
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        input[type=number] {
+            -moz-appearance: textfield;
+        }
+
+        /* Custom Toggle Switch */
+        .toggle-checkbox:checked {
+            right: 0;
+            border-color: #4f46e5;
+        }
+        .toggle-checkbox:checked + .toggle-label {
+            background-color: #4f46e5;
+        }
+        
+        .input-group:focus-within {
+            ring: 2px;
+            ring-color: #6366f1;
+        }
+    </style>
+</head>
+<body class="text-gray-300 min-h-screen flex flex-col font-sans selection:bg-indigo-500 selection:text-white">
+
+    <main class="flex-grow container mx-auto px-4 py-12 max-w-4xl">
+        
+        <!-- Header -->
+        <div class="mb-10 text-center">
+            <h1 class="text-3xl font-bold text-white mb-2">Fluid Typography</h1>
+            <p class="text-gray-400">Linearly scale font-size with clamp()</p>
+        </div>
+
+        <!-- Main Calculator Section -->
+        <div class="space-y-8">
+            
+            <!-- Controls Header: Root & Unit Toggler -->
+            <div class="flex flex-col sm:flex-row justify-between items-center gap-4">
+                
+                <!-- Scaling Direction Toggle -->
+                <div class="flex items-center gap-3 bg-[#1e293b] p-2 rounded-lg border border-slate-700">
+                     <label for="invert-toggle" class="flex items-center cursor-pointer relative">
+                        <input type="checkbox" id="invert-toggle" class="sr-only">
+                        <div class="w-10 h-5 bg-slate-600 rounded-full shadow-inner transition-colors duration-200 ease-in-out" id="invert-bg"></div>
+                        <div class="absolute left-0 w-5 h-5 bg-white rounded-full shadow transform transition-transform duration-200 ease-in-out" id="invert-dot"></div>
+                    </label>
+                    <span class="text-sm font-medium text-gray-300">Invert Direction <span class="text-xs text-gray-500">(Max size @ Min Width)</span></span>
+                </div>
+
+                <div class="flex items-center gap-4">
+                    <!-- Root Size Input -->
+                    <div class="flex items-center gap-2 bg-[#1e293b] px-3 py-1.5 rounded-lg border border-slate-700">
+                        <label for="root-font" class="text-xs text-gray-400 font-bold uppercase">Root Px</label>
+                        <input type="number" id="root-font" value="16" class="w-12 bg-transparent text-white text-sm font-mono text-right outline-none focus:text-indigo-400">
+                    </div>
+
+                    <!-- Unit Toggler -->
+                    <div class="bg-[#1e293b] p-1 rounded-lg border border-slate-700 inline-flex">
+                        <button id="toggle-px" class="px-4 py-1.5 text-sm font-semibold rounded-md transition-all bg-indigo-600 text-white shadow-sm" onclick="setUnit('px')">PX</button>
+                        <button id="toggle-rem" class="px-4 py-1.5 text-sm font-semibold rounded-md transition-all text-gray-400 hover:text-white" onclick="setUnit('rem')">REM</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Inputs Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+                
+                <!-- Min Width -->
+                <div>
+                    <label class="block text-sm font-semibold text-white mb-2">Minimum viewport width (<span class="unit-label">PX</span>)</label>
+                    <div class="relative group">
+                        <input type="number" id="min-width" value="480" 
+                            class="w-full bg-[#1e293b] text-white text-lg px-4 py-3 rounded-lg border border-slate-700 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all placeholder-gray-500">
+                    </div>
+                </div>
+
+                <!-- Max Width -->
+                <div>
+                    <label class="block text-sm font-semibold text-white mb-2">Maximum viewport width (<span class="unit-label">PX</span>)</label>
+                    <div class="relative group">
+                        <input type="number" id="max-width" value="1440" 
+                            class="w-full bg-[#1e293b] text-white text-lg px-4 py-3 rounded-lg border border-slate-700 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all placeholder-gray-500">
+                    </div>
+                </div>
+
+                <!-- Min Font -->
+                <div>
+                    <label class="block text-sm font-semibold text-white mb-2">Minimum font size (<span class="unit-label">PX</span>)</label>
+                    <div class="relative group">
+                        <input type="number" id="min-font" value="18" step="0.1"
+                            class="w-full bg-[#1e293b] text-white text-lg px-4 py-3 rounded-lg border border-slate-700 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all placeholder-gray-500">
+                    </div>
+                </div>
+
+                <!-- Max Font -->
+                <div>
+                    <label class="block text-sm font-semibold text-white mb-2">Maximum font size (<span class="unit-label">PX</span>)</label>
+                    <div class="relative group">
+                        <input type="number" id="max-font" value="32" step="0.1"
+                            class="w-full bg-[#1e293b] text-white text-lg px-4 py-3 rounded-lg border border-slate-700 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all placeholder-gray-500">
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Result Block -->
+            <div class="relative bg-[#1e293b] rounded-lg p-5 border border-slate-700 flex items-center justify-between group">
+                <code id="output-code" class="font-mono text-gray-200 text-sm md:text-base break-all pr-12">
+                    /* Calculating... */
+                </code>
+                
+                <button id="copy-btn" class="absolute right-4 top-1/2 -translate-y-1/2 p-2 text-gray-400 hover:text-white transition-colors" title="Copy to clipboard">
+                    <i class="fa-regular fa-clipboard text-lg"></i>
+                </button>
+
+                <div id="copy-feedback" class="absolute right-12 top-1/2 -translate-y-1/2 bg-green-600 text-white text-xs font-bold py-1 px-2 rounded opacity-0 transition-opacity duration-300 pointer-events-none">
+                    Copied!
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Divider -->
+        <div class="my-12 border-t border-slate-800"></div>
+
+        <!-- Visual Preview Section -->
+        <div class="w-full opacity-90 hover:opacity-100 transition-opacity">
+            
+            <!-- Live Preview Box -->
+            <div class="bg-[#1e293b] rounded-xl border border-slate-700 overflow-hidden flex flex-col h-64">
+                <div class="px-4 py-3 bg-slate-800/50 border-b border-slate-700 flex justify-between items-center">
+                    <h3 class="text-sm font-medium text-gray-300">Live Preview</h3>
+                    <div class="flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                        <span class="text-xs text-gray-500">Resizable</span>
+                    </div>
+                </div>
+                <div class="flex-grow flex flex-col justify-center items-center p-6 bg-[radial-gradient(#334155_1px,transparent_1px)] [background-size:16px_16px]">
+                    <div id="preview-text" class="text-white font-bold leading-none text-center transition-all duration-75">
+                        Fluid Type
+                    </div>
+                    <p class="text-xs text-gray-500 mt-4 font-mono">Current Size: <span id="current-size" class="text-indigo-400">--</span></p>
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <script>
+        // State
+        let state = {
+            unit: 'px', // 'px' or 'rem'
+            minWidth: 480,
+            maxWidth: 1440,
+            minFont: 18,
+            maxFont: 32,
+            root: 16,
+            invert: false
+        };
+
+        // DOM Elements
+        const inputs = {
+            minWidth: document.getElementById('min-width'),
+            maxWidth: document.getElementById('max-width'),
+            minFont: document.getElementById('min-font'),
+            maxFont: document.getElementById('max-font'),
+            root: document.getElementById('root-font'),
+        };
+
+        const toggles = {
+            px: document.getElementById('toggle-px'),
+            rem: document.getElementById('toggle-rem')
+        };
+        
+        const invertToggle = document.getElementById('invert-toggle');
+        const invertDot = document.getElementById('invert-dot');
+        const invertBg = document.getElementById('invert-bg');
+
+        const unitLabels = document.querySelectorAll('.unit-label');
+        const outputCode = document.getElementById('output-code');
+        const previewText = document.getElementById('preview-text');
+        const currentSizeDisplay = document.getElementById('current-size');
+        const copyBtn = document.getElementById('copy-btn');
+        const copyFeedback = document.getElementById('copy-feedback');
+        const copyIcon = copyBtn.querySelector('i');
+
+        // Functions
+
+        // Parse URL params on load
+        function loadFromParams() {
+            try {
+                const params = new URLSearchParams(window.location.search);
+                if (params.has('min_w')) state.minWidth = parseFloat(params.get('min_w'));
+                if (params.has('max_w')) state.maxWidth = parseFloat(params.get('max_w'));
+                if (params.has('min_f')) state.minFont = parseFloat(params.get('min_f'));
+                if (params.has('max_f')) state.maxFont = parseFloat(params.get('max_f'));
+                if (params.has('root')) state.root = parseFloat(params.get('root'));
+                if (params.has('unit')) {
+                    const u = params.get('unit');
+                    if (u === 'px' || u === 'rem') state.unit = u;
+                }
+                if (params.has('invert')) state.invert = params.get('invert') === 'true';
+
+                updateInputsFromState();
+                updateInvertUI();
+                updateUnitUI();
+            } catch (e) {
+                console.warn('Could not load params:', e);
+            }
+        }
+
+        function updateURL() {
+            const params = new URLSearchParams();
+            params.set('min_w', state.minWidth);
+            params.set('max_w', state.maxWidth);
+            params.set('min_f', state.minFont);
+            params.set('max_f', state.maxFont);
+            params.set('root', state.root);
+            params.set('unit', state.unit);
+            params.set('invert', state.invert);
+            
+            try {
+                // Update URL without reloading
+                // Note: This often fails in sandboxed iframe environments (blobs)
+                window.history.replaceState({}, '', `${window.location.pathname}?${params}`);
+            } catch (e) {
+                // Silently fail in sandbox
+                // console.warn('URL update failed (sandbox restriction):', e);
+            }
+        }
+
+        function updateInputsFromState() {
+            inputs.minWidth.value = state.minWidth;
+            inputs.maxWidth.value = state.maxWidth;
+            inputs.minFont.value = state.minFont;
+            inputs.maxFont.value = state.maxFont;
+            inputs.root.value = state.root;
+            invertToggle.checked = state.invert;
+        }
+
+        function calculateClamp() {
+            updateURL();
+
+            // Get values in pixels for calculation regardless of input unit
+            let minW = parseFloat(state.minWidth);
+            let maxW = parseFloat(state.maxWidth);
+            let minF = parseFloat(state.minFont);
+            let maxF = parseFloat(state.maxFont);
+            const root = parseFloat(state.root) || 16;
+
+            if (state.unit === 'rem') {
+                minW *= root;
+                maxW *= root;
+                minF *= root;
+                maxF *= root;
+            }
+
+            // prevent division by zero
+            if (maxW === minW) maxW = minW + 1;
+
+            // Invert Logic:
+            // Standard: y1=minF at x1=minW, y2=maxF at x2=maxW
+            // Inverted: y1=maxF at x1=minW, y2=minF at x2=maxW
+            let y1 = state.invert ? maxF : minF;
+            let y2 = state.invert ? minF : maxF;
+
+            // Slope Calculation (y = mx + b)
+            const slope = (y2 - y1) / (maxW - minW);
+            const yIntersection = -minW * slope + y1;
+
+            // Create CSS Value strings
+            const slopeVw = (slope * 100).toFixed(4);
+            const yInterRem = (yIntersection / root).toFixed(4);
+            
+            // Bounds for clamp
+            const bound1Rem = (minF / root).toFixed(4);
+            const bound2Rem = (maxF / root).toFixed(4); 
+            
+            // Clamp must be ordered: clamp(MIN, VAL, MAX) where MIN < MAX
+            // However, minFont and maxFont variables are just values. 
+            // If invert is false: minFont is start, maxFont is end.
+            // If invert is true: maxFont is start, minFont is end.
+            
+            // Determine absolute floor and ceiling for the CSS clamp function
+            const absMin = Math.min(minF, maxF) / root;
+            const absMax = Math.max(minF, maxF) / root;
+
+            const clampMin = absMin.toFixed(4);
+            const clampMax = absMax.toFixed(4);
+
+            // Calculate value
+            let val = `${yInterRem}rem + ${slopeVw}vw`;
+            if (yIntersection === 0) val = `${slopeVw}vw`;
+            
+            // Note: In CSS clamp(MIN, VAL, MAX), MIN is the lower bound, MAX is upper bound.
+            // It doesn't matter if slope is positive or negative, CSS clamp validates strictly numerical order.
+            const clampValue = `clamp(${clampMin}rem, ${val}, ${clampMax}rem)`;
+
+            // Update UI
+            outputCode.textContent = clampValue;
+            previewText.style.fontSize = clampValue;
+            
+            updateComputedSize();
+        }
+
+        function updateComputedSize() {
+            const computed = window.getComputedStyle(previewText).fontSize;
+            currentSizeDisplay.textContent = computed;
+        }
+
+        function updateUnitUI() {
+             if (state.unit === 'rem') {
+                toggles.rem.classList.add('bg-indigo-600', 'text-white', 'shadow-sm');
+                toggles.rem.classList.remove('text-gray-400', 'hover:text-white');
+                toggles.px.classList.remove('bg-indigo-600', 'text-white', 'shadow-sm');
+                toggles.px.classList.add('text-gray-400', 'hover:text-white');
+            } else {
+                toggles.px.classList.add('bg-indigo-600', 'text-white', 'shadow-sm');
+                toggles.px.classList.remove('text-gray-400', 'hover:text-white');
+                toggles.rem.classList.remove('bg-indigo-600', 'text-white', 'shadow-sm');
+                toggles.rem.classList.add('text-gray-400', 'hover:text-white');
+            }
+            unitLabels.forEach(l => l.textContent = state.unit.toUpperCase());
+        }
+        
+        function updateInvertUI() {
+             if (state.invert) {
+                invertDot.classList.add('translate-x-5');
+                invertBg.classList.replace('bg-slate-600', 'bg-indigo-600');
+            } else {
+                invertDot.classList.remove('translate-x-5');
+                invertBg.classList.replace('bg-indigo-600', 'bg-slate-600');
+            }
+        }
+
+        function setUnit(newUnit) {
+            if (state.unit === newUnit) return;
+            
+            const root = parseFloat(state.root) || 16;
+
+            if (newUnit === 'rem') {
+                // px to rem
+                state.minWidth = parseFloat((state.minWidth / root).toFixed(3));
+                state.maxWidth = parseFloat((state.maxWidth / root).toFixed(3));
+                state.minFont = parseFloat((state.minFont / root).toFixed(3));
+                state.maxFont = parseFloat((state.maxFont / root).toFixed(3));
+            } else {
+                // rem to px
+                state.minWidth = parseFloat((state.minWidth * root).toFixed(1));
+                state.maxWidth = parseFloat((state.maxWidth * root).toFixed(1));
+                state.minFont = parseFloat((state.minFont * root).toFixed(1));
+                state.maxFont = parseFloat((state.maxFont * root).toFixed(1));
+            }
+            
+            state.unit = newUnit;
+            updateInputsFromState();
+            updateUnitUI();
+            calculateClamp();
+        }
+
+        // Event Listeners
+        Object.keys(inputs).forEach(key => {
+            inputs[key].addEventListener('input', (e) => {
+                state[key] = parseFloat(e.target.value) || 0;
+                calculateClamp();
+            });
+        });
+
+        invertToggle.addEventListener('change', (e) => {
+            state.invert = e.target.checked;
+            updateInvertUI();
+            calculateClamp();
+        });
+
+        window.addEventListener('resize', updateComputedSize);
+
+        copyBtn.addEventListener('click', () => {
+            const code = outputCode.textContent.trim();
+            navigator.clipboard.writeText(code).then(() => {
+                copyFeedback.classList.remove('opacity-0');
+                copyIcon.classList.replace('fa-clipboard', 'fa-check');
+                copyIcon.classList.add('text-green-500');
+                
+                setTimeout(() => {
+                    copyFeedback.classList.add('opacity-0');
+                    copyIcon.classList.replace('fa-check', 'fa-clipboard');
+                    copyIcon.classList.remove('text-green-500');
+                }, 2000);
+            });
+        });
+
+        // Initialize
+        loadFromParams();
+        calculateClamp();
+
+    </script>
+</body>
+</html>

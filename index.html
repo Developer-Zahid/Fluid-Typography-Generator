@@ -408,15 +408,16 @@
 
         copyBtn.addEventListener('click', () => {
             const code = outputCode.textContent.trim();
+            const modifiedClasses = ["text-green-500", "fa-solid"];
             navigator.clipboard.writeText(code).then(() => {
                 copyFeedback.classList.remove('opacity-0');
                 copyIcon.classList.replace('fa-clipboard', 'fa-check');
-                copyIcon.classList.add('text-green-500');
+                copyIcon.classList.add(...modifiedClasses);
                 
                 setTimeout(() => {
                     copyFeedback.classList.add('opacity-0');
                     copyIcon.classList.replace('fa-check', 'fa-clipboard');
-                    copyIcon.classList.remove('text-green-500');
+                    copyIcon.classList.remove(...modifiedClasses);
                 }, 2000);
             });
         });
